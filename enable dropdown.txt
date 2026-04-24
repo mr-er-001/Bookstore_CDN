@@ -1,0 +1,95 @@
+function enableDropdownKeyboard(inputSelector, listSelector, itemClass) {
+    let currentIndex = -1;
+
+    $(document).on("keydown", inputSelector, function (e) {
+        let input = $(this);
+        let box = input.siblings(listSelector);
+        let items = box.find(itemClass);
+
+        if (items.length === 0 || box.is(":hidden")) return;
+
+        // ARROW DOWN
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            currentIndex = (currentIndex + 1) % items.length;
+            items.removeClass("active-item");
+            $(items[currentIndex]).addClass("active-item");
+        }
+
+        // ARROW UP
+        else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            currentIndex = (currentIndex - 1 + items.length) % items.length;
+            items.removeClass("active-item");
+            $(items[currentIndex]).addClass("active-item");
+        }
+
+        // ENTER → select item
+        else if (e.key === "Enter") {
+            e.preventDefault();
+            if (currentIndex >= 0) {
+                $(items[currentIndex]).trigger("click");
+                box.hide();           // hide dropdown immediately
+                currentIndex = -1;    // reset index
+            }
+        }
+
+        // ESC → close dropdown
+        else if (e.key === "Escape") {
+            box.hide();
+            currentIndex = -1;        // reset index
+        }
+    });
+}
+
+// Enable for vendor
+enableDropdownKeyboard(".search-vendor", ".vendorResults", ".vendor-item");
+
+
+// Enable for books
+
+// 🔹 Trigger "Add Row" on Enter inside product inputs
+// 🔹 Trigger "Add Row" on Enter inside discount fields
+$(document).on("keydown", ".discount", function(e) {
+    if (e.key === "Enter") {
+        e.preventDefault(); // Prevent form submission
+        $("#addRow").trigger("click"); // Add a new row
+
+        // Focus the first input (book) of the new row
+        let newRow = $("#productRows .productRow").last();
+        newRow.find("input.search-book").focus();
+    }
+});
+
+// Handle Enter in discount input
+$(document).on("keydown", ".discount", function(e) {
+    if (e.key === "Enter") {
+        e.preventDefault(); // Prevent form submission
+
+        let row = $(this).closest('.productRow');
+        let qty = parseFloat(row.find('.qty').val()) || 0;
+        let discount = parseFloat(row.find('.discount').val()) || 0;
+
+        // Only add new row if quantity is > 0
+        if(qty > 0){ 
+            calculateRow(row); // Calculate totals for current row
+
+            $("#addRow").trigger("click"); // Add new row
+
+            // Focus the first input (book) of the new row
+            let newRow = $("#productRows .productRow").last();
+            newRow.find("input.search-book").focus();
+        } else {
+            alert("⚠️ Please enter quantity before adding a new row.");
+            row.find('.qty').focus();
+        }
+    }
+});
+
+// Optional: Enter in qty field jumps to discount field
+$(document).on("keydown", ".qty", function(e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        $(this).closest('.productRow').find('.discount').focus();
+    }
+});
